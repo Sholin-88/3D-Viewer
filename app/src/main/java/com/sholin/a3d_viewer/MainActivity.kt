@@ -86,7 +86,13 @@ fun ThreeDView(innerPaddingValues: PaddingValues) {
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris ->
         uris.forEach { uri ->
-            val isGlb = uri.toString().lowercase().endsWith(".glb")
+            // Query the actual filename from the ContentResolver
+            val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst() && nameIndex != -1) cursor.getString(nameIndex) else null
+            } ?: uri.lastPathSegment ?: ""
+
+            val isGlb = fileName.lowercase().endsWith(".glb")
 
             if (isGlb) {
                 modelItems.add(ModelItem(uri = uri))
